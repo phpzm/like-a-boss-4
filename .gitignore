@@ -1,0 +1,7 @@
+/.idea
+/out
+/gen
+/vendor
+/docker/log
+
+!*.gitkeep
