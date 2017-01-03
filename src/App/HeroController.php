@@ -25,6 +25,14 @@ class HeroController extends Controller
     }
 
     /**
+     * @return string
+     */
+    public function home()
+    {
+        return 'Home';
+    }
+
+    /**
      * @param HeroRepository $repository
      * @param $parameters
      * @param $none
