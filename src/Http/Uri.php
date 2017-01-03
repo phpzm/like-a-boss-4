@@ -58,20 +58,38 @@ class Uri implements UriInterface
     /**
      * Uri constructor.
      * @param $route
-     * @param string $uri URI to parse
+     * @param string $url URI to parse
      */
-    public function __construct($route, $uri = '')
+    public function __construct($route, $url = '')
     {
         $this->route = $route;
 
-        // weak type check to also accept null until we can add scalar type hints
-        if ($uri != '') {
-            $parts = parse_url($uri);
-            if ($parts === false) {
-                throw new \InvalidArgumentException("Unable to parse URI: $uri");
-            }
-            $this->fromParts($parts);
+        $url = $url ? $url : $this->getURl();
+
+        $parts = parse_url($url);
+        if ($parts === false) {
+            throw new \InvalidArgumentException("Unable to parse URI: $url");
         }
+        $this->fromParts($parts);
+
+    }
+
+    /**
+     * @return string
+     */
+    function getURl()
+    {
+        $pieces = ['http'];
+        if (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] == "on") {
+            $pieces[] = "s";
+        }
+        $pieces[] = "://";
+        if (isset($_SERVER["SERVER_PORT"]) && $_SERVER["SERVER_PORT"] != "80") {
+            $pieces[] = $_SERVER["HTTP_HOST"] . ":" . $_SERVER["SERVER_PORT"] . $_SERVER["REQUEST_URI"];
+        } else {
+            $pieces[] = $_SERVER["HTTP_HOST"] . $_SERVER["REQUEST_URI"];
+        }
+        return implode('', $pieces);
     }
 
     /**
@@ -121,7 +139,7 @@ class Uri implements UriInterface
         if ($this->scheme != '') {
             $uri .= $this->scheme . ':';
         }
-        if ($this->authority != ''|| $this->scheme === 'file') {
+        if ($this->authority != '' || $this->scheme === 'file') {
             $uri .= '//' . $this->authority;
         }
         $uri .= $this->path;

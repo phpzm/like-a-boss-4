@@ -12,6 +12,25 @@ use Psr\Http\Message\StreamInterface;
 class Response implements ResponseInterface
 {
     /**
+     * @var int
+     */
+    private $code;
+
+    /**
+     * @var Stream
+     */
+    private $body;
+
+    /**
+     * Response constructor.
+     */
+    public function __construct()
+    {
+        $this->code = 200;
+        $this->body = new Stream();
+    }
+
+    /**
      * Retrieves the HTTP protocol version as a string.
      *
      * The string MUST contain only the HTTP version number (e.g., "1.1", "1.0").
@@ -201,8 +220,7 @@ class Response implements ResponseInterface
      */
     public function getBody()
     {
-        // TODO: Implement getBody() method.
-        throw new \Exception('Method not implemented yet!');
+        return $this->body;
     }
 
     /**
@@ -220,8 +238,11 @@ class Response implements ResponseInterface
      */
     public function withBody(StreamInterface $body)
     {
-        // TODO: Implement withBody() method.
-        throw new \Exception('Method not implemented yet!');
+        $new = clone $this;
+
+        $new->body = $body;
+
+        return $new;
     }
 
     /**
@@ -234,8 +255,7 @@ class Response implements ResponseInterface
      */
     public function getStatusCode()
     {
-        // TODO: Implement getStatusCode() method.
-        throw new \Exception('Method not implemented yet!');
+        return $this->code;
     }
 
     /**
@@ -260,8 +280,11 @@ class Response implements ResponseInterface
      */
     public function withStatus($code, $reasonPhrase = '')
     {
-        // TODO: Implement withStatus() method.
-        throw new \Exception('Method not implemented yet!');
+        $new = clone $this;
+
+        $new->code = $code;
+
+        return $new;
     }
 
     /**

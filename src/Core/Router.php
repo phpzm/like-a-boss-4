@@ -55,23 +55,23 @@ class Router
 
     /**
      * @param $method
-     * @param $uri
-     * @return mixed|null
+     * @param $route
+     * @return Match|null
      */
-    public function match($method, $uri)
+    public function match($method, $route)
     {
         $method = strtolower($method);
         if (!isset($this->routes[$method])) {
             return null;
         }
 
-        foreach ($this->routes[$method] as $route => $callback) {
+        foreach ($this->routes[$method] as $candidate => $callable) {
 
-            if (preg_match($route, $uri, $parameters)) {
+            if (preg_match($candidate, $route, $parameters)) {
 
                 array_shift($parameters);
 
-                return new Match($callback, $parameters);
+                return new Match($callable, $parameters);
             }
         }
         return null;
