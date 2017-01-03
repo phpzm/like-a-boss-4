@@ -46,24 +46,30 @@ class Container
     /**
      * Register a class or alias into the Container.
      *
-     * @param $alias string Interface/class/alias register
-     * @param $implementation mixed current implementation
+     * @param $alias
+     * @param $implementation
+     * @return $this
      */
     public function register($alias, $implementation)
     {
         $this->bindings[$alias] = $implementation;
+
+        return $this;
     }
 
     /**
      * UnRegister a Interface/Class/Alias.
      *
      * @param $aliasOrClassName
+     * @return $this
      */
     public function unRegister($aliasOrClassName)
     {
         if (array_key_exists($aliasOrClassName, $this->bindings)) {
             unset($this->bindings[$aliasOrClassName]);
         }
+
+        return $this;
     }
 
     /**
@@ -120,17 +126,64 @@ class Container
         // go through the container and resolve it
         foreach ($constructorParameters as $parameter) {
             // get the expected class
-            $parameterClassName = $parameter->getClass()->name;
+            $parameterClassName = isset($parameter->getClass()->name) ? $parameter->getClass()->name : '';
 
             // if there is a class
             if ($parameterClassName) {
                 // ask the container to resolve it
                 $parametersToPass[] = self::make($parameterClassName);
+            } else {
+                // add a null info to complete arguments
+                $parametersToPass[] = null;
             }
         }
 
         // created and returns the new instance passing the
         // resolved parameters
         return $reflection->newInstanceArgs($parametersToPass ? $parametersToPass : []);
+    }
+
+    /**
+     * @param $instance
+     * @param $method
+     * @param $parameters
+     * @return array
+     */
+    public function makeParameters($instance, $method, $parameters)
+    {
+        // method reflection
+        $reflectionMethod = new \ReflectionMethod($instance, $method);
+
+        // resolved array of parameters
+        $parametersToPass = [];
+
+        // parameters of method
+        $methodParameters = $reflectionMethod->getParameters();
+
+        // for each expected parameter,
+        // go through the container and resolve it
+        foreach ($methodParameters as $methodParameter) {
+
+            // get the expected class
+            $parameterClassName = isset($methodParameter->getClass()->name) ? $methodParameter->getClass()->name : '';
+
+            // if there is a class
+            if ($parameterClassName) {
+                // ask the container to resolve it
+                $parametersToPass[] = self::make($parameterClassName);
+            } else if (count($parameters)) {
+                // add a null info to complete arguments
+                $parametersToPass[] = $parameters[0];
+                // remove the first
+                array_shift($parameters);
+                // reconfigure the array
+                reset($parameters);
+            } else {
+
+                $parametersToPass[] = null;
+            }
+        }
+
+        return $parametersToPass;
     }
 }

@@ -1,8 +1,6 @@
 <?php
 
-define('__APP_ROOT__', dirname(__DIR__));
-
-require __APP_ROOT__ . '/vendor/autoload.php';
+require dirname(__DIR__) . '/vendor/autoload.php';
 
 use Hero\Core\App;
 

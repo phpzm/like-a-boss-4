@@ -11,14 +11,32 @@ use Hero\Core\Controller;
 class HeroController extends Controller
 {
     /**
-     * @param $parameters
-     * @return mixed
+     * @var HeroModel
      */
-    public function action($parameters)
+    private $model;
+
+    /**
+     * HeroController constructor.
+     * @param HeroModel $model
+     */
+    public function __construct(HeroModel $model)
     {
-        return [
-            'action' => $parameters
-        ];
+        $this->model = $model;
     }
 
+    /**
+     * @param HeroRepository $repository
+     * @param $parameters
+     * @param $none
+     * @return array
+     */
+    public function action(HeroRepository $repository, $parameters, $none)
+    {
+        return [
+            'action' => [
+                'parameters' => [$parameters, $none],
+                'say' => $repository->say($this->model->say())
+            ]
+        ];
+    }
 }

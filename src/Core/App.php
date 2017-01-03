@@ -32,11 +32,14 @@ class App extends Router
      */
     public function __construct(array $options = [])
     {
+        $default = ['separator' => '@'];
+        $this->options = array_merge($default, $options);
+
         $this->request = new Request();
         $this->response = new Response();
-        $default = ['separator' => '@'];
-
-        $this->options = array_merge($default, $options);
+        Container::getInstance()
+            ->register(Request::class, $this->request)
+            ->register(Response::class, $this->response);
     }
 
     /**
@@ -79,12 +82,16 @@ class App extends Router
     /**
      * @param $callable
      * @param $parameters
-     * @return mixed
+     * @param bool $embed
+     * @return mixed|null
      */
-    private function call($callable, $parameters)
+    private function call($callable, $parameters, $embed = true)
     {
         if (is_callable($callable)) {
-            return call_user_func_array($callable, [$this->request, $this->response, $parameters]);
+            if ($embed) {
+                $parameters = [$this->request, $this->response, $parameters];
+            }
+            return call_user_func_array($callable, $parameters);
         } else {
             $pieces = explode($this->options['separator'], $callable);
             if (isset($pieces[0]) && isset($pieces[1])) {
@@ -92,7 +99,12 @@ class App extends Router
                 $class = $pieces[0];
                 $method = $pieces[1];
                 $instance = $container->make($class);
-                return call_user_func_array([$instance, $method], $parameters);
+                if (is_callable($instance)) {
+                    $instance($this->request, $this->response);
+                }
+                $parameters = $container->makeParameters($instance, $method, $parameters);
+
+                return $this->call([$instance, $method], $parameters, false);
             }
         }
         return null;
