@@ -9,7 +9,7 @@ like-a-boss-4.webserver:
       - .:/var/www/app
       - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
   ports:
-   - "83:80"
+   - "8080:80"
   links:
    - like-a-boss-4.phpfpm
 
