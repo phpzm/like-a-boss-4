@@ -13,7 +13,7 @@
     }
   },
   "scripts": {
-
+    "bash": "docker exec -it like-a-boss-4.phpfpm bash"
   },
   "require": {
     "psr/http-message": "^1.0"

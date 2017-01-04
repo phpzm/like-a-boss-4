@@ -30,7 +30,7 @@ class HeroController extends Controller
      */
     public function home($fragment)
     {
-        return ['fragment' => $fragment];
+        return ['fragments' => $fragment];
     }
 
     /**
