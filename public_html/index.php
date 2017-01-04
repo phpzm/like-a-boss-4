@@ -11,7 +11,12 @@ $http = new App([
 ]);
 
 $http
-    ->on('GET', '/path/to/action/:upa', 'Hero\App\HeroController->action', ['labels' => false])
+    ->on('GET', '/', function () {
+        return 'Made with &hearts; by @wilcorrea';
+    })
+    ->on('GET', '/path/to/action/:upa',
+        'Hero\App\HeroController->action', ['labels' => false]
+    )
     ->on('GET', '/:path*', function (HeroController $heroController, $path) {
         return $heroController->home($path);
     });
