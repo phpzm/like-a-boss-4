@@ -19,6 +19,11 @@ class Router
     private $routes = [];
 
     /**
+     * @var bool
+     */
+    protected $labels = false;
+
+    /**
      * is triggered when invoking inaccessible methods in an object context.
      *
      * @param $name string
@@ -35,9 +40,10 @@ class Router
      * @param $method
      * @param $path
      * @param $callback
+     * @param array $options
      * @return $this
      */
-    public function on($method, $path, $callback)
+    public function on($method, $path, $callback, $options = [])
     {
         $method = strtolower($method);
         if (!isset($this->routes[$method])) {
@@ -45,10 +51,34 @@ class Router
         }
 
         $uri = substr($path, 0, 1) !== '/' ? '/' . $path : $path;
-        $pattern = str_replace('/', '\/', $uri);
+
+        $pieces = explode('/', $uri);
+        $labels = [];
+        foreach ($pieces as $key => $piece) {
+            $label = '';
+            $regex = $piece;
+            if (substr($piece, 0, 1) === ':') {
+                $regex = '(\w+)';
+                $label = substr($piece, 1);
+            }
+            if (substr($piece, -1) === '*') {
+                $regex = '(.*)';
+                $label = substr($piece, 1, -1);
+            }
+            if ($label) {
+                $labels[] = $label;
+            }
+            $pieces[$key] = $regex;
+        }
+
+        $pattern = str_replace('/', '\/', implode('/', $pieces));
         $route = '/^' . $pattern . '$/';
 
-        $this->routes[$method][$route] = $callback;
+        $this->routes[$method][$route] = [
+            'callback' => $callback,
+            'labels' => $labels,
+            'options' => $options
+        ];
 
         return $this;
     }
@@ -71,7 +101,17 @@ class Router
 
                 array_shift($parameters);
 
-                return new Match($callable, $parameters);
+                $callback = $callable['callback'];
+                $labels = $callable['labels'];
+                $options = $callable['options'];
+                $data = $parameters;
+                if ($this->labels || (isset($options['labels']) ? $options['labels'] : false)) {
+                    foreach ($labels as $key => $label) {
+                        $data[$label] = $parameters[$key];
+                    }
+                }
+
+                return new Match($callback, $data, $options);
             }
         }
         return null;

@@ -32,11 +32,17 @@ class App extends Router
      */
     public function __construct(array $options = [])
     {
-        $default = ['separator' => '@'];
+        $default = [
+            'separator' => '@',
+            'labels' => false
+        ];
         $this->options = array_merge($default, $options);
+
+        $this->labels = $this->options['labels'];
 
         $this->request = new Request();
         $this->response = new Response();
+
         Container::getInstance()
             ->register(Request::class, $this->request)
             ->register(Response::class, $this->response);
@@ -69,7 +75,7 @@ class App extends Router
      */
     private function parse(Match $match)
     {
-        $response = $this->call($match->getCallable(), $match->getParameters());
+        $response = $this->call($match->getCallable(), $match->getParameters(), $match->getOptions());
         if (!($response instanceof Response)) {
             $plain = in_array(gettype($response), ['boolean', 'integer', 'double', 'string']);
             $string = ($plain) ? ((string)$response) : (is_null($response) ? '' : json_encode($response));
@@ -82,29 +88,32 @@ class App extends Router
     /**
      * @param $callable
      * @param $parameters
-     * @param bool $embed
+     * @param $options
+     * @param bool $make
      * @return mixed|null
      */
-    private function call($callable, $parameters, $embed = true)
+    private function call($callable, $parameters, $options = [], $make = true)
     {
+        $container = Container::getInstance();
+
+        $labels = isset($options['labels']) ? $options['labels'] : $this->labels;
         if (is_callable($callable)) {
-            if ($embed) {
-                $parameters = [$this->request, $this->response, $parameters];
+            if ($make) {
+                $parameters = $container->resolveFunctionParameters($callable, $parameters, $labels);
             }
             return call_user_func_array($callable, $parameters);
         } else {
             $pieces = explode($this->options['separator'], $callable);
             if (isset($pieces[0]) && isset($pieces[1])) {
-                $container = Container::getInstance();
                 $class = $pieces[0];
                 $method = $pieces[1];
                 $instance = $container->make($class);
                 if (is_callable($instance)) {
                     $instance($this->request, $this->response);
                 }
-                $parameters = $container->makeParameters($instance, $method, $parameters);
+                $parameters = $container->resolveMethodParameters($instance, $method, $parameters, $labels);
 
-                return $this->call([$instance, $method], $parameters, false);
+                return $this->call([$instance, $method], $parameters, $options, false);
             }
         }
         return null;

@@ -25,24 +25,25 @@ class HeroController extends Controller
     }
 
     /**
-     * @return string
+     * @param $fragment
+     * @return array
      */
-    public function home()
+    public function home($fragment)
     {
-        return 'Home';
+        return ['fragment' => $fragment];
     }
 
     /**
      * @param HeroRepository $repository
-     * @param $parameters
+     * @param $id
      * @param $none
      * @return array
      */
-    public function action(HeroRepository $repository, $parameters, $none)
+    public function action(HeroRepository $repository, $id, $none)
     {
         return [
             'action' => [
-                'parameters' => [$parameters, $none],
+                'parameters' => [$id, $none],
                 'say' => $repository->say($this->model->say())
             ]
         ];

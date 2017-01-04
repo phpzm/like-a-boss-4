@@ -34,14 +34,21 @@ class Match
     private $parameters;
 
     /**
+     * @var array
+     */
+    private $options;
+
+    /**
      * Match constructor.
      * @param $callable
      * @param $parameters
+     * @param array $options
      */
-    public function __construct($callable, $parameters)
+    public function __construct($callable, $parameters, $options = [])
     {
         $this->callable = $callable;
         $this->parameters = $parameters;
+        $this->options = $options;
     }
 
     /**
@@ -77,6 +84,24 @@ class Match
     public function setParameters($parameters)
     {
         $this->parameters = $parameters;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getOptions()
+    {
+        return $this->options;
+    }
+
+    /**
+     * @param array $options
+     * @return Match
+     */
+    public function setOptions($options)
+    {
+        $this->options = $options;
         return $this;
     }
 

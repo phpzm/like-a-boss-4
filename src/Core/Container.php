@@ -80,10 +80,6 @@ class Container
      */
     public function make($alias)
     {
-        if (class_exists($alias)) {
-            return $this->makeInstance($alias);
-        }
-
         if (array_key_exists($alias, $this->bindings)) {
             $classOrObject = $this->bindings[$alias];
 
@@ -92,6 +88,10 @@ class Container
             }
 
             return $this->makeInstance($classOrObject);
+        }
+
+        if (class_exists($alias)) {
+            return self::register($alias, $this->makeInstance($alias))->make($alias);
         }
 
         return null;
@@ -116,70 +116,83 @@ class Container
             return $reflection->newInstance();
         }
 
-        // if there is parameters, get them!
-        $constructorParameters = $constructor->getParameters();
-
-        // resolved array of parameters
-        $parametersToPass = [];
-
-        // for each expected parameter,
-        // go through the container and resolve it
-        foreach ($constructorParameters as $parameter) {
-            // get the expected class
-            $parameterClassName = isset($parameter->getClass()->name) ? $parameter->getClass()->name : '';
-
-            // if there is a class
-            if ($parameterClassName) {
-                // ask the container to resolve it
-                $parametersToPass[] = self::make($parameterClassName);
-            } else {
-                // add a null info to complete arguments
-                $parametersToPass[] = null;
-            }
-        }
-
         // created and returns the new instance passing the
         // resolved parameters
-        return $reflection->newInstanceArgs($parametersToPass ? $parametersToPass : []);
+        return $reflection->newInstanceArgs($this->resolveParameters($constructor->getParameters(), []));
     }
 
     /**
      * @param $instance
      * @param $method
      * @param $parameters
+     * @param bool $labels
      * @return array
      */
-    public function makeParameters($instance, $method, $parameters)
+    public function resolveMethodParameters($instance, $method, $parameters, $labels = false)
     {
         // method reflection
         $reflectionMethod = new \ReflectionMethod($instance, $method);
 
         // resolved array of parameters
-        $parametersToPass = [];
+        return $this->resolveParameters($reflectionMethod->getParameters(), $parameters, $labels);
+    }
 
-        // parameters of method
-        $methodParameters = $reflectionMethod->getParameters();
+    /**
+     * @param $callable
+     * @param $parameters
+     * @param bool $labels
+     * @return array
+     */
+    public function resolveFunctionParameters($callable, $parameters, $labels = false)
+    {
+        // method reflection
+        $reflectionFunction = new \ReflectionFunction($callable);
+
+        // resolved array of parameters
+        return $this->resolveParameters($reflectionFunction->getParameters(), $parameters, $labels);
+    }
+
+    /**
+     * @param $parameters
+     * @param $data
+     * @param bool $labels
+     * @return array
+     */
+    private function resolveParameters($parameters, $data, $labels = false)
+    {
+        // resolved array of parameters
+        $parametersToPass = [];
 
         // for each expected parameter,
         // go through the container and resolve it
-        foreach ($methodParameters as $methodParameter) {
+        /** @var \ReflectionParameter $reflectionParameter */
+        foreach ($parameters as $reflectionParameter) {
 
             // get the expected class
-            $parameterClassName = isset($methodParameter->getClass()->name) ? $methodParameter->getClass()->name : '';
+            $parameterClassName = isset($reflectionParameter->getClass()->name) ? $reflectionParameter->getClass()->name : '';
 
             // if there is a class
             if ($parameterClassName) {
                 // ask the container to resolve it
                 $parametersToPass[] = self::make($parameterClassName);
-            } else if (count($parameters)) {
-                // add a null info to complete arguments
-                $parametersToPass[] = $parameters[0];
-                // remove the first
-                array_shift($parameters);
-                // reconfigure the array
-                reset($parameters);
-            } else {
 
+            } else if ($labels && isset($data[$reflectionParameter->getName()])) {
+                // get parameter by name
+                $parametersToPass[] = $data[$reflectionParameter->getName()];
+                // remove from list
+                unset($data[$reflectionParameter->getName()]);
+
+            } else if (!$labels && count($data)) {
+
+                // add a null info to complete arguments
+                $parametersToPass[] = $data[0];
+                // remove the first
+                array_shift($data);
+                // reconfigure the array
+                reset($data);
+
+            } else {
+                // send null to fill
                 $parametersToPass[] = null;
             }
         }
