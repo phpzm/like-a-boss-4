@@ -6,8 +6,8 @@ use Hero\App\HeroController;
 use Hero\Core\App;
 
 $http = new App([
-    'separator' => '->',
-    'labels' => true
+    'separator' => '->', // used to concat class & method what will be called
+    'labels' => true // exact match of parameter name of route with parameter name of callback of route
 ]);
 
 $http
