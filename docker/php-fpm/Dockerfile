@@ -1,7 +1,7 @@
 FROM phpdockerio/php71-fpm:latest
 
-ENV http_proxy http://172.16.0.1:3128
-ENV https_proxy https://172.16.0.1:3128
+#ENV http_proxy http://172.16.0.1:3128
+#ENV https_proxy https://172.16.0.1:3128
 
 # Install selected extensions and other stuff
 RUN apt-get update \
